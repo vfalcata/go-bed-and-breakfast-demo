@@ -1,0 +1,68 @@
+up migration updates sql, and it can take sql commands
+To create a table with soda use command:
+soda generate fizz Create[TABLE_NAME]Table
+
+then put in the table properties in the "up" file in the migrations folder
+
+then to migrate by going to root dir and use cmd:
+soda migrate
+
+Notice that a schema migration table is created, and it has one Column, version number
+
+Inside the down migration, we can reverse commands by running the commends in the "down", via command:
+soda migrate down
+
+Why is this useful?
+It is useful for prototyping. We can write all our migrations for all or our tables and rebuild the development database right from scratch. we do this by migrate down to remove all and migrate to rebuild and recreate or database structure. This is also useful to undo or redo changes
+
+NEVER commit the database.yml to git. 
+
+In this case we git ignore it, and have a "database.yml.example" file to demonstrate what should be in there (of course removing any auth related data)
+
+Foreign Key
+In order to create a FK table use command:
+soda generate fizz CreateFKFor[TABLE_NAME]Table
+
+NOTE: You must create all the tables first, and then create the FK after
+
+Using the example from reservations
+add_foreign_key("reservations", "room_id", {"rooms": ["id"]}, {
+    "on_delete": "cascade",
+    "on_update": "cascade",
+})
+
+this line "add_foreign_key("reservations", "room_id", {"rooms": ["id"]}"
+says add a foreign key to reservations, from table "rooms" using column "{"rooms": ["id"]}"  and name it "room_id" for this table
+Generically we would want:
+this line "add_foreign_key("[TABLE_NAME]", "COL_NAME_FOR_FK", {"[FK_ORIGIN_TABLE_NAME]": ["[FK_ORIGIN_COL_NAME]""]}"
+
+The "on_delete": "cascade"
+means that if the original table deletes this column, the column in the FK table will also be deleted. This works the same way for on_update
+
+IMPORTANT
+On the foreign key name for the "down" migration file, postgres automatically names it so you must access the db (with gui tool such as dbeaver) and look for foreign keys and get the name
+
+
+Create Unique Index
+If we have a lot of data for example we will have a lot of data for reservations and room restrictions over time.
+We have to do something to speed up table access or it will be too slow to read because we end up doing a row level table scan, where in order to find for example all of the restrictions for a given room, the database will actually scan through the entire table looking for things that have a given room ID, and that's not efficient at all. We can speed it up a lot by putting an index on a given field. So for example if we put an index on the room ID, than the database will actually store a method of accessing information about the room restrictions table for a given room ID very very quickly. To do this we use command:
+soda generate fizz CreateUniqueIndexFor[TableName]Table
+
+Then in the "up" migration file we specify unique index
+add_index("users", "email", {"unique": true})
+
+
+To create an index (non unique)
+soda generate fizz CreateIndicesOn[TableName]Table
+
+
+REVERT DB TO START
+To run all off the down migrations, and then run all the up migrations.
+NOTE: You MUST disconnect the db from other clients() or it WILL throw an error
+then run command:
+soda reset
+
+This will give a clean tables
+
+In order to seed database we use command:
+soda generate sql Seed[TABLE_NAME]Table

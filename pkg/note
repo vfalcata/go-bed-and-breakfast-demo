@@ -1,0 +1,4 @@
+By convention (this is not a hard rule)
+
+When you use "pkg" you are communicating to others that anything in you pkg folder is completely 
+divorced from the logic of your application ant that you can import into any application.
